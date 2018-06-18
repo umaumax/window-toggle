@@ -3,6 +3,8 @@
 target=$1
 cmd=(${@:2})
 
+export DISPLAY=:0
+
 function focus() {
 	for WID in "$@"; do
 		is_visual=1

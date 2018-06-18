@@ -1,5 +1,7 @@
 # window-toggle
 
+window toggle shell command for linux(mainly ubuntu)
+
 * required xdotool
 	* ```sudo apt-get install -y xdotool```
 
@@ -19,6 +21,9 @@
 # "xterm", "XTerm"
 # "xterm", "UXTerm"
 # "Navigator", "Firefox"
+# "tilda", "Tilda"
+# "terminator", "Terminator"
+# "google-chrome", "Google-chrome"
 
 # WM_NAME
 # "unity-panel"
