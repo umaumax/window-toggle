@@ -5,23 +5,28 @@ cmd=(${@:2})
 
 export DISPLAY=:0
 
+function map() {
+	for WID in "$@"; do
+		# 		echo $WID
+		xwininfo -id $WID | grep 'Map State: IsUnMapped' >/dev/null
+		[[ $? == 0 ]] && continue
+		xdotool windowmap $WID
+	done
+}
 function focus() {
 	for WID in "$@"; do
-		is_visual=1
 		# Map State: IsViewable
 		# Map State: IsUnMapped
 		# 		xwininfo -id $WID | grep 'Depth: 0' >/dev/null
 		xwininfo -id $WID | grep 'Map State: IsUnMapped' >/dev/null
-		[[ $? == 0 ]] && is_visual=0
-		if [[ $is_visual == 1 ]]; then
-			echo "focus $WID"
-			xdotool windowfocus $WID
-			wait_focus $WID
-			xdotool windowactivate $WID
-			# set top view
-			# 			xdotool windowraise $WID
-			return 0
-		fi
+		[[ $? == 0 ]] && continue
+		# 		echo "focus $WID"
+		xdotool windowfocus $WID
+		wait_focus $WID
+		xdotool windowactivate $WID
+		# set top view
+		# 			xdotool windowraise $WID
+		return 0
 	done
 	return 1
 }
@@ -41,19 +46,16 @@ function REVERSE() {
 	for WID in "$@"; do
 		rev=($WID "${rev[@]}")
 	done
-	echo "${rev[@]}"
+	# 	echo "${rev[@]}"
 }
 VISIBLE_WIDS=($(xdotool search --onlyvisible --class "$target"))
-echo 'onlyvisible'
-echo "${VISIBLE_WIDS[@]}"
+# echo 'onlyvisible'
+# echo "${VISIBLE_WIDS[@]}"
 if [[ ${#VISIBLE_WIDS[@]} == 0 ]]; then
 	WIDS=($(xdotool search --class "$target"))
-	echo 'windowmap'
-	for WID in $(REVERSE "${WIDS[@]}"); do
-		echo $WID
-		xdotool windowmap $WID
-	done
-	echo 'focus and activate'
+	# 	echo 'windowmap'
+	map $(REVERSE "${WIDS[@]}")
+	# 	echo 'focus and activate'
 	focus $(REVERSE "${WIDS[@]}") && exit 0
 	# NOTE: launch app
 	# NOTE: gnome-terminalは`&`は不要
@@ -62,7 +64,7 @@ if [[ ${#VISIBLE_WIDS[@]} == 0 ]]; then
 else
 	WIDS=($(xdotool search --class "$target"))
 	FOCUSED_WID=$(xdotool getwindowfocus)
-	echo 'activate'
+	# 	echo 'activate'
 	focus_flag=0
 	for WID in "${WIDS[@]}"; do
 		[[ $WID == $FOCUSED_WID ]] && focus_flag=1
@@ -74,7 +76,7 @@ else
 		exit 0
 	fi
 
-	echo 'windowunmap'
+	# 	echo 'windowunmap'
 	for WID in "${VISIBLE_WIDS[@]}"; do
 		xdotool windowunmap $WID
 	done
