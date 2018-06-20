@@ -19,7 +19,7 @@ function focus() {
 			wait_focus $WID
 			xdotool windowactivate $WID
 			# set top view
-			xdotool windowraise $WID
+			# 			xdotool windowraise $WID
 			return 0
 		fi
 	done

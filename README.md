@@ -24,6 +24,7 @@ window toggle shell command for linux(mainly ubuntu)
 # "tilda", "Tilda"
 # "terminator", "Terminator"
 # "google-chrome", "Google-chrome"
+# "hyper", "Hyper"
 
 # WM_NAME
 # "unity-panel"
