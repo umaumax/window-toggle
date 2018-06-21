@@ -5,13 +5,48 @@ cmd=(${@:2})
 
 export DISPLAY=:0
 
+function get_info() {
+	local WID=$1
+	# [command line \- How do I find the window dimensions and position accurately including decorations? \- Unix & Linux Stack Exchange]( https://unix.stackexchange.com/questions/14159/how-do-i-find-the-window-dimensions-and-position-accurately-including-decoration )
+	eval $(xwininfo -id $WID |
+		sed -n -e "s/^ \+Absolute upper-left X: \+\([0-9]\+\).*/x=\1/p" \
+			-e "s/^ \+Absolute upper-left Y: \+\([0-9]\+\).*/y=\1/p" \
+			-e "s/^ \+Width: \+\([0-9]\+\).*/w=\1/p" \
+			-e "s/^ \+Height: \+\([0-9]\+\).*/h=\1/p" \
+			-e "s/^ \+Relative upper-left X: \+\([0-9]\+\).*/b=\1/p" \
+			-e "s/^ \+Relative upper-left Y: \+\([0-9]\+\).*/t=\1/p")
+	if [ "$entire" = true ]; then # if user wanted entire window, adjust x,y,w and h
+		let x=$x-$b
+		let y=$y-$t
+		let w=$w+2*$b
+		let h=$h+$t+$b
+	fi
+	echo "$w" "$h" "$x" "$y" "$b" "$t"
+}
+
+function detect() {
+	xwininfo -id $WID | grep 'Depth: 0' >/dev/null && return 0
+	[[ "$target" == "Terminator" ]] && xwininfo -id $WID | grep 'Depth: 24' >/dev/null && return 0
+
+	local info=($(get_info $WID))
+	local w=${info[0]}
+	local h=${info[1]}
+	local x=${info[2]}
+	local y=${info[3]}
+	local b=${info[4]}
+	local t=${info[5]}
+	if [[ "$target" == "Hyper" ]]; then
+		[[ $b == 0 ]] && [[ $t == 0 ]] && [[ $x != 0 ]] && [[ $y != 0 ]] || return 0
+	fi
+	return 1
+}
+
 function map() {
 	echo "map"
 	echo "map args:" "$@"
 	for WID in "$@"; do
 		echo $WID
-		xwininfo -id $WID | grep -e 'Depth: 0' -e 'Depth: 24' >/dev/null
-		[[ $? == 0 ]] && continue
+		detect $WID && continue
 		xdotool windowmap $WID
 	done
 }
@@ -19,33 +54,22 @@ function focus() {
 	echo "focus"
 	echo "focus args:" "$@"
 	for WID in "$@"; do
-		xwininfo -id $WID | grep -e 'Depth: 0' -e 'Depth: 24' >/dev/null
-		code=$?
-		echo "$WID:$code"
-		[[ $code == 0 ]] && continue
+		detect $WID && continue
 		echo "focus $WID"
 		xdotool windowfocus $WID
 		wait_focus $WID
 		xdotool windowactivate $WID
 		# set top view
 		# xdotool windowraise $WID
-		# [command line \- How do I find the window dimensions and position accurately including decorations? \- Unix & Linux Stack Exchange]( https://unix.stackexchange.com/questions/14159/how-do-i-find-the-window-dimensions-and-position-accurately-including-decoration )
-		eval $(xwininfo -id $WID |
-			sed -n -e "s/^ \+Absolute upper-left X: \+\([0-9]\+\).*/x=\1/p" \
-				-e "s/^ \+Absolute upper-left Y: \+\([0-9]\+\).*/y=\1/p" \
-				-e "s/^ \+Width: \+\([0-9]\+\).*/w=\1/p" \
-				-e "s/^ \+Height: \+\([0-9]\+\).*/h=\1/p" \
-				-e "s/^ \+Relative upper-left X: \+\([0-9]\+\).*/b=\1/p" \
-				-e "s/^ \+Relative upper-left Y: \+\([0-9]\+\).*/t=\1/p")
-		if [ "$entire" = true ]; then # if user wanted entire window, adjust x,y,w and h
-			let x=$x-$b
-			let y=$y-$t
-			let w=$w+2*$b
-			let h=$h+$t+$b
-		fi
-		# echo "$w"x"$h" $x,$y
 		# windowをmain displayへ強制的に移動
 		# NOTE: 事前に得られた情報を元にしているので、汎用性なし
+		local info=($(get_info $WID))
+		local w=${info[0]}
+		local h=${info[1]}
+		local x=${info[2]}
+		local y=${info[3]}
+		local b=${info[4]}
+		local t=${info[5]}
 		if [[ "$target" == "Terminator" ]] && [[ $x == 1969 ]]; then
 			x=49
 			xdotool windowmove $WID $x $y
