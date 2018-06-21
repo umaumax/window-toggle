@@ -6,26 +6,51 @@ cmd=(${@:2})
 export DISPLAY=:0
 
 function map() {
+	echo "map"
+	echo "map args:" "$@"
 	for WID in "$@"; do
-		# 		echo $WID
-		xwininfo -id $WID | grep 'Map State: IsUnMapped' >/dev/null
+		echo $WID
+		xwininfo -id $WID | grep -e 'Depth: 0' -e 'Depth: 24' >/dev/null
 		[[ $? == 0 ]] && continue
 		xdotool windowmap $WID
 	done
 }
 function focus() {
+	echo "focus"
+	echo "focus args:" "$@"
 	for WID in "$@"; do
-		# Map State: IsViewable
-		# Map State: IsUnMapped
-		# 		xwininfo -id $WID | grep 'Depth: 0' >/dev/null
-		xwininfo -id $WID | grep 'Map State: IsUnMapped' >/dev/null
-		[[ $? == 0 ]] && continue
-		# 		echo "focus $WID"
+		xwininfo -id $WID | grep -e 'Depth: 0' -e 'Depth: 24' >/dev/null
+		code=$?
+		echo "$WID:$code"
+		[[ $code == 0 ]] && continue
+		echo "focus $WID"
 		xdotool windowfocus $WID
 		wait_focus $WID
 		xdotool windowactivate $WID
 		# set top view
-		# 			xdotool windowraise $WID
+		# xdotool windowraise $WID
+		# [command line \- How do I find the window dimensions and position accurately including decorations? \- Unix & Linux Stack Exchange]( https://unix.stackexchange.com/questions/14159/how-do-i-find-the-window-dimensions-and-position-accurately-including-decoration )
+		eval $(xwininfo -id $WID |
+			sed -n -e "s/^ \+Absolute upper-left X: \+\([0-9]\+\).*/x=\1/p" \
+				-e "s/^ \+Absolute upper-left Y: \+\([0-9]\+\).*/y=\1/p" \
+				-e "s/^ \+Width: \+\([0-9]\+\).*/w=\1/p" \
+				-e "s/^ \+Height: \+\([0-9]\+\).*/h=\1/p" \
+				-e "s/^ \+Relative upper-left X: \+\([0-9]\+\).*/b=\1/p" \
+				-e "s/^ \+Relative upper-left Y: \+\([0-9]\+\).*/t=\1/p")
+		if [ "$entire" = true ]; then # if user wanted entire window, adjust x,y,w and h
+			let x=$x-$b
+			let y=$y-$t
+			let w=$w+2*$b
+			let h=$h+$t+$b
+		fi
+		# echo "$w"x"$h" $x,$y
+		# windowをmain displayへ強制的に移動
+		# NOTE: 事前に得られた情報を元にしているので、汎用性なし
+		if [[ "$target" == "Terminator" ]] && [[ $x == 1969 ]]; then
+			x=49
+			xdotool windowmove $WID $x $y
+			xdotool windowsize $WID 1871 1056
+		fi
 		return 0
 	done
 	return 1
@@ -46,16 +71,17 @@ function REVERSE() {
 	for WID in "$@"; do
 		rev=($WID "${rev[@]}")
 	done
-	# 	echo "${rev[@]}"
+	echo "${rev[@]}"
 }
 VISIBLE_WIDS=($(xdotool search --onlyvisible --class "$target"))
 # echo 'onlyvisible'
 # echo "${VISIBLE_WIDS[@]}"
 if [[ ${#VISIBLE_WIDS[@]} == 0 ]]; then
 	WIDS=($(xdotool search --class "$target"))
-	# 	echo 'windowmap'
+	echo 'windowmap'
+	echo "${WIDS[@]}"
 	map $(REVERSE "${WIDS[@]}")
-	# 	echo 'focus and activate'
+	echo 'focus and activate'
 	focus $(REVERSE "${WIDS[@]}") && exit 0
 	# NOTE: launch app
 	# NOTE: gnome-terminalは`&`は不要
@@ -63,7 +89,8 @@ if [[ ${#VISIBLE_WIDS[@]} == 0 ]]; then
 	exit 0
 else
 	WIDS=($(xdotool search --class "$target"))
-	FOCUSED_WID=$(xdotool getwindowfocus)
+	# 	FOCUSED_WID=$(xdotool getwindowfocus)
+	FOCUSED_WID=$(xdotool getactivewindow)
 	# 	echo 'activate'
 	focus_flag=0
 	for WID in "${WIDS[@]}"; do
