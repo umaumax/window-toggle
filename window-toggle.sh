@@ -71,9 +71,13 @@ function focus() {
 		local b=${info[4]}
 		local t=${info[5]}
 		if [[ "$target" == "Terminator" ]] && [[ $x == 1969 ]]; then
-			x=49
-			xdotool windowmove $WID $x $y
-			xdotool windowsize $WID 1871 1056
+			# Required: wmctrl
+			# 特定のスクリーンにwmctrl経由で移動すると自動でsize fit
+			# NOTE: 一瞬画面表示が行われるのをどうにかしたいかも
+			wmctrl -i -r $WID -e 0,0,100,100,100
+			# 			x=49
+			# 			xdotool windowmove $WID $x $y
+			# 			xdotool windowsize $WID 1871 1056
 		fi
 		return 0
 	done
