@@ -53,12 +53,23 @@ function map() {
 function focus() {
 	echo "focus"
 	echo "focus args:" "$@"
+	local all_flag=0
+	local ret_val=1
+	[[ $1 == -all ]] && all_flag=1 && shift 1
+
+	# NOTE: 発見し，focusできるまで繰り返す
 	for WID in "$@"; do
 		detect $WID && continue
 		echo "focus $WID"
 		xdotool windowfocus $WID
+		if [[ $? == 0 ]]; then
+			echo "windowfocus $WID success"
+		else
+			continue
+		fi
 		wait_focus $WID
 		xdotool windowactivate $WID
+		[[ $? == 0 ]] && echo "windowactivate $WID success"
 		# set top view
 		# xdotool windowraise $WID
 		# windowをmain displayへ強制的に移動
@@ -79,20 +90,23 @@ function focus() {
 			# 			xdotool windowmove $WID $x $y
 			# 			xdotool windowsize $WID 1871 1056
 		fi
-		return 0
+		ret_val=0
+		[[ $all_flag == 0 ]] && return $ret_val
 	done
-	return 1
+	return $ret_val
 }
 # NOTE: 一定の間，時間を開けずにgetwindowfocusを発行すると以降の間ずっとエラーとなるので，getactivewindowを用いる
 function wait_focus() {
 	local WID=$1
 	local max=10
+	echo "wating focus of $1 start"
 	for ((i = 0; i < $max; i++)); do
 		FOCUSED_WID=$(xdotool getactivewindow)
 		# 		FOCUSED_WID=$(xdotool getwindowfocus)
 		[[ $WID == $FOCUSED_WID ]] && break
 		sleep 0.1
 	done
+	echo "wating focus of $1 finish"
 }
 function REVERSE() {
 	local rev=()
@@ -104,13 +118,17 @@ function REVERSE() {
 VISIBLE_WIDS=($(xdotool search --onlyvisible --class "$target"))
 # echo 'onlyvisible'
 # echo "${VISIBLE_WIDS[@]}"
+opt=''
+# [[ $target == "Gnome-terminal" ]] && opt='-all'
 if [[ ${#VISIBLE_WIDS[@]} == 0 ]]; then
 	WIDS=($(xdotool search --class "$target"))
 	echo 'windowmap'
 	echo "${WIDS[@]}"
-	map $(REVERSE "${WIDS[@]}")
+	# 	map $(REVERSE "${WIDS[@]}")
+	map "${WIDS[@]}"
 	echo 'focus and activate'
-	focus $(REVERSE "${WIDS[@]}") && exit 0
+	focus $opt $(REVERSE "${WIDS[@]}") && exit 0
+	# 	focus $opt "${WIDS[@]}" && exit 0
 	# NOTE: launch app
 	# NOTE: gnome-terminalは`&`は不要
 	"${cmd[@]}" &
@@ -127,7 +145,7 @@ else
 	# NOTE: only focus
 	if [[ $focus_flag == 0 ]]; then
 		echo 'focus and activate'
-		focus "${WIDS[@]}"
+		focus $opt "${WIDS[@]}"
 		exit 0
 	fi
 

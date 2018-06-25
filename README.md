@@ -2,8 +2,9 @@
 
 window toggle shell command for linux(mainly ubuntu)
 
-* required xdotool
-	* ```sudo apt-get install -y xdotool```
+* required xdotool and wmctrl
+	* `sudo apt-get install xdotool`
+	* `sudo apt-get install wmctrl`
 
 ## how to run
 ```
@@ -40,14 +41,22 @@ sudo apt-get install xbindkeys
 ----
 
 ```
-sudo apt-get install wmctrl
-```
-```
 # "/usr/bin/gnome-terminal --geometry=212x35+0+0 --title=TotalTerminal --full-screen"
 ```
+
 * ウィンドウの情報をクリックで取得
 ```
 xprop | grep -e WM_NAME -e WM_CLASS
 xwininfo
+```
+
+```
 wmctrl -l
+```
+
+```
+function xdotool-infos() {
+	[[ $# == 0 ]] && echo "$0 <class>" && return 1
+	xdotool search --class "$1" | xargs -L 1 sh -c 'printf "# $0"; xwininfo -id $0'
+}
 ```
