@@ -90,6 +90,10 @@ function focus() {
 			# 			xdotool windowmove $WID $x $y
 			# 			xdotool windowsize $WID 1871 1056
 		fi
+		if [[ "$target" == "Gnome-terminal" ]] && [[ $x == 1969 ]]; then
+			xdotool windowmove $WID 0 0
+			xdotool windowsize $WID 1871 1056
+		fi
 		ret_val=0
 		[[ $all_flag == 0 ]] && return $ret_val
 	done
