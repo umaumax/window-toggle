@@ -27,6 +27,7 @@ function get_info() {
 function detect() {
 	xwininfo -id $WID | grep 'Depth: 0' >/dev/null && return 0
 	[[ "$target" == "Terminator" ]] && xwininfo -id $WID | grep 'Depth: 24' >/dev/null && return 0
+	[[ "$target" == "Gnome-terminal" ]] && xwininfo -id $WID | grep 'Depth: 24' >/dev/null && return 0
 
 	local info=($(get_info $WID))
 	local w=${info[0]}
