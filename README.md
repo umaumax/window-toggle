@@ -1,5 +1,18 @@
 # window-toggle
 
+script to use toggle window by app name
+
+# NEW VRESION
+
+```
+./wintoggle.sh gnome-terminal-server.Gnome-terminal
+```
+
+----
+----
+
+# OLD VRESION
+
 window toggle shell command for linux(mainly ubuntu)
 
 * required xdotool and wmctrl
@@ -51,7 +64,12 @@ xwininfo
 ```
 
 ```
-wmctrl -l
+$ wmctrl -l
+# PID, 座標情報を含む(x,y,w,h)
+$ wmctrl -p -G -l
+# workspace info
+$ wmctrl -d
+0 * DG: 1120x621 VP: 0,0 WA: 65,24 1055x597 N/A
 ```
 
 ```
