@@ -8,6 +8,8 @@ script to use toggle window by app name
 ./wintoggle.sh gnome-terminal-server.Gnome-terminal
 ```
 
+## TODO: USE WINDOW_ID version not only APP_NAME
+
 ----
 ----
 
