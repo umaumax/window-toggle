@@ -5,10 +5,30 @@ script to use toggle window by app name
 # NEW VRESION
 
 ```
-./wintoggle.sh gnome-terminal-server.Gnome-terminal
+$ ./wintoggle.sh gnome-terminal-server.Gnome-terminal
+
+$ ./wintoggle.sh [app_name]
+* app_name example
+  * gnome-terminal-server.Gnome-terminal
+  * xterm.XTerm
+  * xterm.UXTerm
+  * tilda.Tilda
+  * guake.Main.py
+  * terminator.Terminator
+  * urxvt.URxvt
+  * Alacritty.Alacritty
+
+  * nautilus.Nautilus
+  * Navigator.Firefox
+
+* environment variables
+  * DEBUG=[0, 1]
+  * USE_XDOTOOL=[0,1] WARN: don't mix wmctrl and xdotool and we have bugs now
 ```
 
-## TODO: USE WINDOW_ID version not only APP_NAME
+## TODO
+* USE WINDOW_ID version not only APP_NAME
+* enable xdotool version
 
 ----
 ----

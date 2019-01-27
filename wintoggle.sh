@@ -4,12 +4,35 @@
 function debug() {
 	[[ -n $DEBUG ]] && echo "[DEBUG] $*"
 }
+debug "environment variables"
+debug "DEBUG: [$DEBUG]"
+debug "USE_XDOTOOL: [$USE_XDOTOOL]"
 
 function cmdcheck() { type >/dev/null 2>&1 "$@"; }
 ! cmdcheck wmctrl && echo 'REQUIRED: wmctrl' && exit 1
 ! cmdcheck xprop && echo 'REQUIRED: xprop' && exit 1
 
 export DISPLAY=:0
+
+# ----
+# function is_wmctrl_id() {
+# 	echo "$1" | grep -q '0x' && [[ ${#1} == 10 ]]
+# }
+# function is_xprop_id() {
+# 	echo "$1" | grep -q '0x' && [[ ${#1} != 10 ]]
+# }
+# function is_xdotool_id() {
+# 	echo "$1" | grep -q -v '0x'
+# }
+function to_wmctrl_id() {
+	printf '0x%08x' $(printf '%d' "$1")
+}
+function to_xprop_id() {
+	printf '0x%x' $(printf '%d' "$1")
+}
+function to_xdotool_id() {
+	printf '%d' "$1"
+}
 
 # NOTE: wmctrl -lは下記の状態の中で番号順でソートされている
 # * shaded on (hidden)
@@ -19,7 +42,7 @@ export DISPLAY=:0
 
 # FYI: [wmctrl \- Get Active Window ID in Hex not Decimal \- Ask Ubuntu]( https://askubuntu.com/questions/646771/get-active-window-id-in-hex-not-decimal )
 function get_active_window_id() {
-	local target_window_id=$(wmctrl -lp | grep $(xprop -root | grep _NET_ACTIVE_WINDOW | head -1 | awk '{print $5}' | sed 's/,//' | sed 's/^0x/0x0/') | cut -d' ' -f1)
+	local target_window_id=$(wmctrl -lp | grep $(to_wmctrl_id $(xprop -root | grep _NET_ACTIVE_WINDOW | head -1 | awk '{print $5}' | sed 's/,//')) | cut -d' ' -f1)
 	[[ -z $target_window_id ]] && return 1
 	echo "$target_window_id"
 }
@@ -79,26 +102,32 @@ function get_first_window_id() {
 function start_app() {
 	local app_name=$1
 	case "$app_name" in
-	"tilda.Tilda")
-		nohup tilda &
-		;;
-	"terminator.Terminator")
-		nohup terminator &
-		;;
 	"gnome-terminal-server.Gnome-terminal")
 		gnome-terminal
 		;;
+	"tilda.Tilda")
+		nohup tilda </dev/null 1>/dev/null 2>/dev/null &
+		;;
+	"terminator.Terminator")
+		nohup terminator </dev/null 1>/dev/null 2>/dev/null &
+		;;
 	"xterm.UXTerm")
-		nohup uxterm &
+		nohup uxterm </dev/null 1>/dev/null 2>/dev/null &
 		;;
 	"xterm.XTerm")
-		nohup xterm &
+		nohup xterm </dev/null 1>/dev/null 2>/dev/null &
 		;;
 	"urxvt.URxvt")
-		nohup urxvt &
+		nohup urxvt </dev/null 1>/dev/null 2>/dev/null &
 		;;
 	"Alacritty.Alacritty")
-		nohup alacritty &
+		nohup alacritty </dev/null 1>/dev/null 2>/dev/null &
+		;;
+	"Navigator.Firefox")
+		nohup firefox </dev/null 1>/dev/null 2>/dev/null &
+		;;
+	"nautilus.Nautilus")
+		nohup xdg-open $PWD </dev/null 1>/dev/null 2>/dev/null &
 		;;
 		#   "guake.Main.py")
 	*)
@@ -113,6 +142,7 @@ function hide_window() {
 	local target_window_id=$(get_first_window_id $app_name)
 	[[ -z $target_window_id ]] && return 1
 	# hide
+	[[ -n $USE_XDOTOOL ]] && xdotool windowunmap $(to_xdotool_id $target_window_id) && return 0
 	wmctrl -i -r $target_window_id -b add,shaded
 }
 
@@ -121,6 +151,7 @@ function show_window() {
 	local target_window_id=$(get_first_window_id $app_name)
 	[[ -z $target_window_id ]] && return 1
 	# show
+	[[ -n $USE_XDOTOOL ]] && xdotool windowmap $(to_xdotool_id $target_window_id) && return 0
 	wmctrl -i -r $target_window_id -b remove,shaded
 }
 
@@ -129,6 +160,7 @@ function focus_window() {
 	local target_window_id=$(get_first_window_id $app_name)
 	[[ -z $target_window_id ]] && return 1
 	# focus
+	[[ -n $USE_XDOTOOL ]] && xdotool windowfocus $(to_xdotool_id $target_window_id) && return 0
 	wmctrl -ia $target_window_id
 }
 
@@ -175,6 +207,10 @@ function help() {
 
   * nautilus.Nautilus
   * Navigator.Firefox
+
+* environment variables
+  * DEBUG=[0, 1]
+  * USE_XDOTOOL=[0,1] WARN: don't mix wmctrl and xdotool and we have bugs now
 EOF
 }
 
