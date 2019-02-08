@@ -5,9 +5,9 @@ script to use toggle window by app name
 # NEW VRESION
 
 ```
-$ ./wintoggle.sh gnome-terminal-server.Gnome-terminal
+$ wintoggle gnome-terminal-server.Gnome-terminal
 
-$ ./wintoggle.sh [app_name]
+$ wintoggle [app_name]
 * app_name example
   * gnome-terminal-server.Gnome-terminal
   * xterm.XTerm
@@ -43,7 +43,7 @@ window toggle shell command for linux(mainly ubuntu)
 
 ## how to run
 ```
-./window-toggle.sh 'Gnome-terminal' 'gnome-terminal'
+window-toggle 'Gnome-terminal' 'gnome-terminal'
 ```
 
 ## NOTE
